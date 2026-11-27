@@ -1,6 +1,9 @@
-// Verbindung zum PC über USB-Seriell: eine JSON-Nachricht pro Zeile.
-// PC -> Gerät: {"t":"state","clock":"14:05","date":"Fr 27.11.","sessions":[{"id","chat","project","state","age","detail","agents"}]}
-// Gerät -> PC: {"t":"hello","fw":"..."} und {"t":"open","id":"..."}
+// Verbindung zur Brücke, per USB-Seriell oder WLAN (TCP): eine JSON-Nachricht pro Zeile.
+// Brücke -> Gerät: {"t":"state","ts":<unix>,"sessions":[{"id","chat","project","state","age","detail","agents"}]}
+//                  {"t":"paired","token":"<hex>","pc":"<name>"}   (nur USB, Antwort auf "pair")
+//                  {"t":"challenge","nonce":"<hex>"}              (nur WLAN, vor dem ersten Zustand)
+// Gerät -> Brücke: {"t":"hello","fw","gid"}  {"t":"open","id"}  {"t":"pair","gid"}  {"t":"auth","gid","mac"}
+//   mac = HMAC-SHA256(token, nonce) als Hex; der Token wird nur beim Koppeln über USB übertragen.
 #pragma once
 #include <Arduino.h>
 
@@ -22,15 +25,20 @@ struct Session {
 struct Model {
   Session sessions[MAX_SESSIONS];
   int count = 0;
-  char clock[8] = "";
-  char date[20] = "";
 };
+
+enum class Via { None, Usb, Wlan };
+enum class Event { None, Paired };
 
 void begin();
 // Liest eingehende Daten; true, wenn ein neuer Zustand angekommen ist.
 bool poll(Model &model);
-// true, wenn in den letzten Sekunden Daten vom PC kamen.
 bool connected();
+bool usbActive();
+Via via();
+Event takeEvent();
 void sendOpen(const char *id);
+// Koppeln anfordern (nur über USB möglich)
+bool requestPair();
 
 }  // namespace pclink

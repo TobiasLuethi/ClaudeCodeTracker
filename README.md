@@ -43,7 +43,7 @@ Claude-Code-Sessions anzeigt (Vorbild: Touch-Dashboard-Mod unter `~/.claude/touc
 - **Alle Zeichenbereiche brauchen gerade x, y, Breite und Höhe**, sonst verwirft der Treiber sie
 - Touch CST816 direkt über Wire: Reg 0x02 Fingerzahl, 0x03–0x06 X/Y; Koordinaten passen ohne Spiegelung zum Display
 
-## Betrieb (Stand 0.1: nur USB)
+## Betrieb (Stand 0.2: USB und WLAN)
 1. Mod `touch-dashboard` ist in Claude Code aktiv (schreibt `~/.claude/touch-dashboard/sessions/*.json`)
 2. Brücke starten: `pc\start-bridge.ps1` (oder `node pc\bridge.mjs`); findet das Gadget über die Espressif-USB-ID,
    sonst `$env:GADGET_PORT='COM5'`
@@ -52,6 +52,25 @@ Claude-Code-Sessions anzeigt (Vorbild: Touch-Dashboard-Mod unter `~/.claude/touc
 4. Ohne Sessions: grosse Uhr. Ohne Brücke: "Warte auf PC".
 5. Ton (zwei kurze Töne), wenn eine Session neu auf Freigabe oder Antwort wartet; nicht beim ersten Stand nach
    dem Verbinden. Lautsprecher-Symbol oben rechts schaltet stumm (bleibt im NVS gespeichert).
+6. Kopfzeile rechts: Uhr, Verbindung (USB/WLAN), Akku, Ton. Tipp auf den Titel öffnet die Einstellungen.
+
+### WLAN-Betrieb
+1. **WLAN einrichten** (Einstellungen): Gadget öffnet den offenen Hotspot `Claude-Gadget-xxxx` (endet nach dem
+   Speichern oder nach 5 min) und zeigt einen QR-Code. Am Handy verbinden, mobile Daten aus,
+   `http://192.168.4.1` öffnen, WLAN wählen, Passwort eingeben. Zugangsdaten liegen im NVS des Gadgets.
+2. **Mit diesem PC koppeln** (Einstellungen, nur am USB): Brücke erzeugt einen 256-bit-Schlüssel, speichert ihn
+   in `~/.claude/touch-dashboard/gadgets.json` und schickt ihn per USB ans Gadget. Erst danach öffnet die
+   Brücke UDP 47390 (Suche) und TCP 47391 (Verbindung). Windows fragt dabei nach der Firewall-Freigabe für Node.
+3. Ohne USB-Datenverbindung sucht das Gadget den PC per UDP-Broadcast, verbindet per TCP und meldet sich mit
+   HMAC-SHA256(Schlüssel, Zufallswert der Brücke) an. Nur gekoppelte Gadgets bekommen Antworten und Daten.
+   Ist USB aktiv, wird die WLAN-Verbindung zur Brücke getrennt (USB hat Vorrang).
+4. Uhrzeit: von der Brücke (`ts`), sonst NTP über WLAN; gesichert in der RTC PCF85063 (Zeitzone CH).
+5. Akku (AXP2101): Symbol in der Kopfzeile, Prozent in den Einstellungen. Ohne USB-Strom dunkelt das Display nach
+   2 min ohne Berührung ab; Tipp oder neue Freigabe/Frage weckt es.
+
+Speicher: LVGL alloziert über `lv_mem_psram.c` aus dem PSRAM (`LV_STDLIB_CUSTOM`). Vorher war der interne RAM
+bis auf ~6 KB belegt, und der DHCP-Dienst des Hotspots vergab keine Adressen. Nach dem Start meldet das Gadget
+den freien internen RAM an die Brücke (`Start: interner RAM frei ...`); er sollte deutlich über 100 KB liegen.
 
 Protokoll: eine JSON-Zeile pro Nachricht, siehe `firmware/dashboard/link.h`.
 Schrift: Montserrat Medium (`font_montserrat_ttf.cpp`, eingebettete TTF) wird zur Laufzeit von LVGL `tiny_ttf`
@@ -84,9 +103,10 @@ Sketch deshalb nicht ohne Weiteres; das CLI-Skript ist der vorgesehene Weg.
 - `backup/` – Originalfirmware (XiaoZhi) und Anleitung zum Zurückspielen
 - `firmware/hwtest` – I2C-Scan
 - `firmware/displaytest` – Farben, Randlineal, Malen per Touch
+- `firmware/aptest` – Minimaltest Hotspot + Webseite (Fehlersuche WLAN)
 - `firmware/dashboard` – eigentliche Firmware (LVGL 9)
 - `pc/` – USB-Brücke (`bridge.mjs`, Node 18+, Paket `serialport`)
 
 ## Offen
-- WLAN-Betrieb mit Kopplung per USB, Uhr/Wetter offline, Akku, Lagesensor (umdrehen = Nicht stören)
+- Wetter, Lagesensor (umdrehen = Nicht stören)
 - Installer für den Kollegen (Mod, Brücke, Autostart)

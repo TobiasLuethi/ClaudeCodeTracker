@@ -34,7 +34,7 @@
  *  - LV_STDLIB_RTTHREAD
  *  - LV_STDLIB_CUSTOM: Custom (implemented externally)
  */
-#define LV_USE_STDLIB_MALLOC LV_STDLIB_CLIB
+#define LV_USE_STDLIB_MALLOC LV_STDLIB_CUSTOM
 
 /** String functions source
  *  Possible values:
@@ -1475,7 +1475,7 @@
  *
  *  Enable: LV_USE_CANVAS
  */
-#define LV_USE_QRCODE 0
+#define LV_USE_QRCODE 1
 
 /** Legacy rlottie binding, kept for compatibility. Use LV_USE_LOTTIE instead. */
 #define LV_USE_RLOTTIE 0

@@ -11,7 +11,7 @@ constexpr int PIN_CS = 12, PIN_SCK = 11, PIN_D0 = 4, PIN_D1 = 5, PIN_D2 = 6, PIN
 constexpr int PIN_SDA = 15, PIN_SCL = 14;
 constexpr uint8_t ADDR_TCA9554 = 0x20, ADDR_TOUCH = 0x15;
 constexpr uint16_t X_GAP = 0x10;
-constexpr int CHUNK_ROWS = 32;  // gerade
+constexpr int CHUNK_ROWS = 16;  // gerade; klein halten, liegt im knappen internen RAM
 
 // Init-Sequenz aus dem Waveshare-BSP (esp32_s3_touch_amoled_1_8)
 const esp_panel_lcd_vendor_init_cmd_t INIT_CMDS[] = {
