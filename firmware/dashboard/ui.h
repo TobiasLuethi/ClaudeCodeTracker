@@ -12,5 +12,7 @@ void tick();
 // Ton per Lautsprecher-Symbol in der Kopfzeile stummgeschaltet (bleibt nach Neustart erhalten)
 bool muted();
 void onPaired();
+// Gadget umgedreht (Nicht stören) bzw. wieder aufgedeckt
+void onDnd(bool on);
 
 }  // namespace ui

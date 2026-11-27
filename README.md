@@ -53,6 +53,9 @@ Claude-Code-Sessions anzeigt (Vorbild: Touch-Dashboard-Mod unter `~/.claude/touc
 5. Ton (zwei kurze Töne), wenn eine Session neu auf Freigabe oder Antwort wartet; nicht beim ersten Stand nach
    dem Verbinden. Lautsprecher-Symbol oben rechts schaltet stumm (bleibt im NVS gespeichert).
 6. Kopfzeile rechts: Uhr, Verbindung (USB/WLAN), Akku, Ton. Tipp auf den Titel öffnet die Einstellungen.
+7. **Nicht stören:** Gadget mit dem Display nach unten hinlegen (QMI8658, ~1 s entprellt) schaltet Display,
+   Ton und Touch aus. Zurückdrehen weckt es ("Nicht stören aus"). Achse am Board gemessen: Display oben
+   ergibt az ≈ -1.1 g (`UP_SIGN` in `imu.cpp`).
 
 ### WLAN-Betrieb
 1. **WLAN einrichten** (Einstellungen): Gadget öffnet den offenen Hotspot `Claude-Gadget-xxxx` (endet nach dem
@@ -108,5 +111,5 @@ Sketch deshalb nicht ohne Weiteres; das CLI-Skript ist der vorgesehene Weg.
 - `pc/` – USB-Brücke (`bridge.mjs`, Node 18+, Paket `serialport`)
 
 ## Offen
-- Wetter, Lagesensor (umdrehen = Nicht stören)
+- Wetter
 - Installer für den Kollegen (Mod, Brücke, Autostart)

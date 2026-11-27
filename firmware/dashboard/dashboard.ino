@@ -5,6 +5,7 @@
 #include "audio.h"
 #include "board.h"
 #include "clock.h"
+#include "imu.h"
 #include "link.h"
 #include "net.h"
 #include "power.h"
@@ -21,6 +22,7 @@ static bool lastConnected = false;
 static uint32_t lastActivity = 0;
 static uint32_t lastTick = 0;
 static uint8_t brightness = BRIGHT_USB;
+static bool dnd = false;  // Display liegt nach unten: aus, kein Ton, kein Touch
 
 // Sessions, die beim letzten Stand eine Freigabe oder Antwort brauchten
 static char waiting[pclink::MAX_SESSIONS][64];
@@ -42,7 +44,7 @@ static void checkAttention(const pclink::Model &m) {
   }
   if (fresh && haveBaseline) {
     lastActivity = millis();
-    if (!ui::muted()) audio::chime();
+    if (!ui::muted() && !dnd) audio::chime();
   }
   waitingCount = 0;
   for (int i = 0; i < m.count; i++)
@@ -53,7 +55,8 @@ static void checkAttention(const pclink::Model &m) {
 // Akkubetrieb: nach einiger Zeit ohne Berührung abdunkeln
 static void updateBrightness() {
   uint8_t want = BRIGHT_USB;
-  if (!power::usbPower()) want = millis() - lastActivity > DIM_AFTER_MS ? BRIGHT_DIM : BRIGHT_BATTERY;
+  if (dnd) want = 0;
+  else if (!power::usbPower()) want = millis() - lastActivity > DIM_AFTER_MS ? BRIGHT_DIM : BRIGHT_BATTERY;
   if (want != brightness) {
     brightness = want;
     board::setBrightness(want);
@@ -79,7 +82,7 @@ static void rounderCb(lv_event_t *e) {
 static void touchCb(lv_indev_t *, lv_indev_data_t *data) {
   static int lx = 0, ly = 0;
   int x, y;
-  if (board::readTouch(x, y)) {
+  if (!dnd && board::readTouch(x, y)) {
     lx = x;
     ly = y;
     data->state = LV_INDEV_STATE_PRESSED;
@@ -99,6 +102,7 @@ void setup() {
   pclink::begin();
   if (!board::begin()) logLine("Display-Start fehlgeschlagen");
   if (!power::begin()) logLine("AXP2101 nicht gefunden");
+  if (!imu::begin()) logLine("QMI8658 nicht gefunden");
   clock_::begin();
   if (!audio::begin()) logLine("Audio-Start fehlgeschlagen");
   net::begin();
@@ -129,6 +133,14 @@ void setup() {
 void loop() {
   power::loop();
   clock_::loop();
+  imu::loop();
+  if (imu::faceDown() != dnd) {
+    dnd = imu::faceDown();
+    lastActivity = millis();
+    updateBrightness();
+    ui::onDnd(dnd);
+    Serial.printf("{\"t\":\"log\",\"msg\":\"Nicht stoeren %s (z=%.2f g)\"}\n", dnd ? "an" : "aus", imu::z());
+  }
   net::loop(pclink::usbActive());
 
   bool updated = pclink::poll(model);

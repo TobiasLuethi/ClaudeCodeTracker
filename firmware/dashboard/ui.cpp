@@ -585,6 +585,10 @@ void tick() {
   }
 }
 
+void onDnd(bool on) {
+  if (!on) showToast(LV_SYMBOL_BELL "  Nicht stören aus", 2000);
+}
+
 void onPaired() {
   refreshSettings();
   showToast(LV_SYMBOL_OK "  Mit PC gekoppelt", 2500);
