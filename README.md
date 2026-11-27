@@ -56,6 +56,11 @@ Claude-Code-Sessions anzeigt (Vorbild: Touch-Dashboard-Mod unter `~/.claude/touc
 7. **Nicht stören:** Gadget mit dem Display nach unten hinlegen (QMI8658, ~1 s entprellt) schaltet Display,
    Ton und Touch aus. Zurückdrehen weckt es ("Nicht stören aus"). Achse am Board gemessen: Display oben
    ergibt az ≈ -1.1 g (`UP_SIGN` in `imu.cpp`).
+8. **Tasten:**
+   - **BOOT** (GPIO 0): jeder Klick wechselt Normal → Ohne Ton → Nicht stören → Normal. "Nicht stören" zeigt die
+     Meldung 1.5 s, dann geht das Display aus; der nächste Klick weckt.
+   - **PWR** (am AXP2101): kurz = Hinweis, 1.5 s halten = Ausschalten (`pmu.shutdown()`), aus dem
+     ausgeschalteten Zustand 0.5 s drücken = Einschalten. 6 s halten = Hardware-Notabschaltung des AXP2101.
 
 ### WLAN-Betrieb
 1. **WLAN einrichten** (Einstellungen): Gadget öffnet den offenen Hotspot `Claude-Gadget-xxxx` (endet nach dem
@@ -111,5 +116,4 @@ Sketch deshalb nicht ohne Weiteres; das CLI-Skript ist der vorgesehene Weg.
 - `pc/` – USB-Brücke (`bridge.mjs`, Node 18+, Paket `serialport`)
 
 ## Offen
-- Wetter
 - Installer für den Kollegen (Mod, Brücke, Autostart)

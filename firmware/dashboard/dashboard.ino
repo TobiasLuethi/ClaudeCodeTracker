@@ -22,7 +22,16 @@ static bool lastConnected = false;
 static uint32_t lastActivity = 0;
 static uint32_t lastTick = 0;
 static uint8_t brightness = BRIGHT_USB;
-static bool dnd = false;  // Display liegt nach unten: aus, kein Ton, kein Touch
+static bool dnd = false;  // Nicht stören aktiv: Display aus, kein Ton, kein Touch
+
+// Tasten: BOOT (GPIO 0) wechselt den Modus Normal -> Ohne Ton -> Nicht stören -> Normal,
+// PWR (am AXP2101) gedrückt halten schaltet aus.
+constexpr int PIN_BOOT = 0;
+constexpr uint32_t DND_DARK_DELAY_MS = 1500;  // Meldung "Nicht stören" erst noch zeigen
+static bool buttonDnd = false;
+static uint32_t buttonDndSince = 0;
+static bool bootLast = true;
+static uint32_t bootChangedAt = 0;
 
 // Sessions, die beim letzten Stand eine Freigabe oder Antwort brauchten
 static char waiting[pclink::MAX_SESSIONS][64];
@@ -63,6 +72,48 @@ static void updateBrightness() {
   }
 }
 
+// BOOT: Normal -> Ohne Ton -> Nicht stören -> Normal
+static void onModeButton() {
+  lastActivity = millis();
+  if (buttonDnd) {
+    buttonDnd = false;  // beim Aufwachen zeigt ui::onDnd() "Nicht stören aus"
+    ui::setMuted(false);
+  } else if (ui::muted()) {
+    buttonDnd = true;
+    buttonDndSince = millis();
+    ui::toast(LV_SYMBOL_EYE_CLOSE "  Nicht stören", DND_DARK_DELAY_MS);
+  } else {
+    ui::setMuted(true);
+    ui::toast(LV_SYMBOL_MUTE "  Ohne Ton");
+  }
+}
+
+static void pollButtons() {
+  bool level = digitalRead(PIN_BOOT);  // gedrückt = LOW
+  if (level != bootLast && millis() - bootChangedAt > 30) {
+    bootLast = level;
+    bootChangedAt = millis();
+    if (!level) onModeButton();
+  }
+
+  switch (power::takeKey()) {
+    case power::Key::Long:
+      ui::toast(LV_SYMBOL_POWER "  Ausschalten ...", 3000);
+      delay(800);
+      board::setBrightness(0);
+      Serial.println("{\"t\":\"log\",\"msg\":\"Ausschalten per PWR\"}");
+      Serial.flush();
+      delay(100);
+      power::shutdown();
+      break;
+    case power::Key::Short:
+      if (!dnd) ui::toast(LV_SYMBOL_POWER "  Zum Ausschalten gedrückt halten", 2200);
+      break;
+    default:
+      break;
+  }
+}
+
 static uint32_t tickCb() { return millis(); }
 
 static void flushCb(lv_display_t *d, const lv_area_t *a, uint8_t *px) {
@@ -100,6 +151,7 @@ static void logLine(const char *msg) {
 
 void setup() {
   pclink::begin();
+  pinMode(PIN_BOOT, INPUT_PULLUP);
   if (!board::begin()) logLine("Display-Start fehlgeschlagen");
   if (!power::begin()) logLine("AXP2101 nicht gefunden");
   if (!imu::begin()) logLine("QMI8658 nicht gefunden");
@@ -134,12 +186,14 @@ void loop() {
   power::loop();
   clock_::loop();
   imu::loop();
-  if (imu::faceDown() != dnd) {
-    dnd = imu::faceDown();
+  pollButtons();
+  bool wantDnd = imu::faceDown() || (buttonDnd && millis() - buttonDndSince > DND_DARK_DELAY_MS);
+  if (wantDnd != dnd) {
+    dnd = wantDnd;
     lastActivity = millis();
     updateBrightness();
     ui::onDnd(dnd);
-    Serial.printf("{\"t\":\"log\",\"msg\":\"Nicht stoeren %s (z=%.2f g)\"}\n", dnd ? "an" : "aus", imu::z());
+    Serial.printf("{\"t\":\"log\",\"msg\":\"Nicht stoeren %s\"}\n", dnd ? "an" : "aus");
   }
   net::loop(pclink::usbActive());
 

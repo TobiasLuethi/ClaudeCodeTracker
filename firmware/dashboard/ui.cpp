@@ -55,7 +55,7 @@ lv_obj_t *emptyPanel, *emptyClock, *emptyDate;
 lv_obj_t *offlinePanel, *offClock, *offDate, *offHint;
 lv_obj_t *settings, *sWifi, *sPc, *sBattery, *sPairBtn, *sUnpairBtn;
 lv_obj_t *portalScr, *pQr, *pInfo;
-lv_obj_t *toast;
+lv_obj_t *toastLbl;
 lv_timer_t *toastTimer = nullptr;
 bool isConnected = false;
 int attentionCount = 0;
@@ -82,14 +82,14 @@ void fmtAge(char *buf, size_t n, uint32_t s) {
 }
 
 void hideToast(lv_timer_t *) {
-  lv_obj_add_flag(toast, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(toastLbl, LV_OBJ_FLAG_HIDDEN);
   toastTimer = nullptr;
 }
 
 void showToast(const char *text, uint32_t ms = 1800) {
-  lv_label_set_text(toast, text);
-  lv_obj_remove_flag(toast, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_move_foreground(toast);
+  lv_label_set_text(toastLbl, text);
+  lv_obj_remove_flag(toastLbl, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_foreground(toastLbl);
   if (toastTimer) lv_timer_delete(toastTimer);
   toastTimer = lv_timer_create(hideToast, ms, nullptr);
   lv_timer_set_repeat_count(toastTimer, 1);
@@ -442,6 +442,18 @@ void buildPortal(lv_obj_t *scr) {
 
 bool muted() { return isMuted; }
 
+void setMuted(bool m) {
+  if (m == isMuted) return;
+  isMuted = m;
+  prefs.putBool("muted", isMuted);
+  showSound();
+}
+
+void toast(const char *text, uint32_t ms) {
+  showToast(text, ms);
+  lv_refr_now(nullptr);
+}
+
 void begin() {
   prefs.begin("gadget", false);
   isMuted = prefs.getBool("muted", false);
@@ -526,14 +538,14 @@ void begin() {
   buildPortal(scr);
 
   // Kurzmeldung unten
-  toast = label(scr, F16, COL_TEXT);
-  lv_obj_set_style_bg_color(toast, lv_color_hex(0x3A3A3C), 0);
-  lv_obj_set_style_bg_opa(toast, LV_OPA_COVER, 0);
-  lv_obj_set_style_radius(toast, 16, 0);
-  lv_obj_set_style_pad_hor(toast, 16, 0);
-  lv_obj_set_style_pad_ver(toast, 8, 0);
-  lv_obj_align(toast, LV_ALIGN_BOTTOM_MID, 0, -16);
-  lv_obj_add_flag(toast, LV_OBJ_FLAG_HIDDEN);
+  toastLbl = label(scr, F16, COL_TEXT);
+  lv_obj_set_style_bg_color(toastLbl, lv_color_hex(0x3A3A3C), 0);
+  lv_obj_set_style_bg_opa(toastLbl, LV_OPA_COVER, 0);
+  lv_obj_set_style_radius(toastLbl, 16, 0);
+  lv_obj_set_style_pad_hor(toastLbl, 16, 0);
+  lv_obj_set_style_pad_ver(toastLbl, 8, 0);
+  lv_obj_align(toastLbl, LV_ALIGN_BOTTOM_MID, 0, -16);
+  lv_obj_add_flag(toastLbl, LV_OBJ_FLAG_HIDDEN);
 
   static pclink::Model empty;  // ~7 KB, nicht auf den Stack
   update(empty, false);

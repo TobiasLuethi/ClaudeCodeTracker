@@ -11,6 +11,9 @@ void update(const pclink::Model &model, bool connected);
 void tick();
 // Ton per Lautsprecher-Symbol in der Kopfzeile stummgeschaltet (bleibt nach Neustart erhalten)
 bool muted();
+void setMuted(bool m);
+// Kurzmeldung unten einblenden (sofort gezeichnet)
+void toast(const char *text, uint32_t ms = 1800);
 void onPaired();
 // Gadget umgedreht (Nicht stören) bzw. wieder aufgedeckt
 void onDnd(bool on);
