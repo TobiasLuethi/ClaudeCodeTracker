@@ -326,6 +326,17 @@ const startNetwork = () => {
 }
 
 // --- Start -------------------------------------------------------------------
+// Nur eine Brücke pro PC: lokaler Port als Sperre (Autostart und Handstart gleichzeitig)
+const LOCK_PORT = 47393
+await new Promise(resolve => {
+  const lock = net.createServer()
+  lock.once('error', () => {
+    log('Brücke läuft bereits, dieser Start wird beendet.')
+    process.exit(0)
+  })
+  lock.listen(LOCK_PORT, '127.0.0.1', resolve)
+})
+
 log('Claude Touch Gadget Bridge - suche Gadget ...')
 await loadGadgets()
 startNetwork()

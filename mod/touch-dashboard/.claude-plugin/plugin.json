@@ -1,0 +1,5 @@
+{
+  "name": "touch-dashboard",
+  "version": "0.1.0",
+  "description": "Meldet Status, Subagents und offene Freigaben jeder Session an das Touch-Dashboard und nimmt dessen Entscheide entgegen."
+}

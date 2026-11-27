@@ -94,6 +94,21 @@ Hinweis Stack: Hauptprogramm läuft mit 16 KB Stack (`SET_LOOP_TASK_STACK_SIZE`)
 
 **Zum Flashen die Brücke beenden**, sonst ist der COM-Port belegt.
 
+## Installer (PC des Empfängers)
+`installer\Installieren.cmd` → `install.ps1` (nur aktueller Benutzer, keine Admin-Rechte):
+- prüft Node.js ≥ 18, bietet sonst `winget install OpenJS.NodeJS.LTS` an
+- kopiert die Brücke nach `%LOCALAPPDATA%\ClaudeTouchGadget\bridge` und führt `npm ci` aus
+- kopiert den Mod (`mod/touch-dashboard`) und trägt ihn per `pc/settings-helper.mjs` in
+  `~/.claude/settings.json` → `env.CLAUDE_CODE_PLUGIN_DIRS` ein (bestehende Einträge bleiben, Sicherung
+  `settings.json.bak-touch-gadget`, BOM wird toleriert)
+- Autostart: Verknüpfung im Startup-Ordner → `start-bridge.vbs` startet `node bridge.mjs` unsichtbar,
+  Protokoll `bridge.log` (ab 1 MB neu)
+- die Brücke läuft nur einmal (Sperre auf 127.0.0.1:47393)
+
+`Deinstallieren.cmd` macht alles rückgängig (Kopplung mit `-KeepPairing` behalten). Parameter `-InstallDir`,
+`-ClaudeHome`, `-NoAutostart`, `-NoStart` erlauben einen Test in einem Sandbox-Ordner.
+Anleitung für den Empfänger: [ANLEITUNG.md](ANLEITUNG.md).
+
 ## Build
 - Toolchain: Arduino IDE 2.3.11 (enthält `arduino-cli` 1.6.0), ESP32-Core 3.3.12
 - Bibliotheken: lvgl 9.6.0, ESP32_Display_Panel 2.0.0, ESP32_IO_Expander 2.0.0, esp-lib-utils 0.2.3,
@@ -113,7 +128,10 @@ Sketch deshalb nicht ohne Weiteres; das CLI-Skript ist der vorgesehene Weg.
 - `firmware/displaytest` – Farben, Randlineal, Malen per Touch
 - `firmware/aptest` – Minimaltest Hotspot + Webseite (Fehlersuche WLAN)
 - `firmware/dashboard` – eigentliche Firmware (LVGL 9)
-- `pc/` – USB-Brücke (`bridge.mjs`, Node 18+, Paket `serialport`)
+- `pc/` – Brücke (`bridge.mjs`, Node 18+, Paket `serialport`) und `settings-helper.mjs`
+- `mod/touch-dashboard` – der Claude-Code-Mod, der den Status jeder Session schreibt
+- `installer/` – Installieren.cmd / Deinstallieren.cmd
 
 ## Offen
-- Installer für den Kollegen (Mod, Brücke, Autostart)
+- Akkubetrieb mit echtem Akku testen
+- Installer einmal auf einem frischen PC durchspielen (Autostart-Verknüpfung bisher nur per Code geprüft)
