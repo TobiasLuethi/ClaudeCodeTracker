@@ -1,0 +1,15 @@
+# Node
+node_modules/
+
+# Firmware-Abbild des Boards: enthält den ganzen Flash inkl. NVS (evtl. WLAN-Zugangsdaten)
+backup/*.bin
+
+# Build-Ausgaben
+build/
+*.elf
+*.map
+
+# Editor / OS
+.vscode/
+Thumbs.db
+desktop.ini

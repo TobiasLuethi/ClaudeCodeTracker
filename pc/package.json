@@ -1,0 +1,14 @@
+{
+  "name": "claude-touch-gadget-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "USB-Brücke zwischen dem Touch-Dashboard-Mod von Claude Code und dem ESP32-S3-AMOLED-Gadget",
+  "type": "module",
+  "main": "bridge.mjs",
+  "scripts": {
+    "start": "node bridge.mjs"
+  },
+  "dependencies": {
+    "serialport": "^12.0.0"
+  }
+}
